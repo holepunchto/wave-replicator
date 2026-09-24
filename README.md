@@ -202,6 +202,10 @@ Frame and message counters per band.
 
 #### `await wave.close()`
 
+## Todo
+
+- Detect the broadcast type. Today a listener only hears broadcasts in its own mode, for example a `duet` listener does not decode `calm` or `morse`. Listen for every voice and data band at once, and give each song preset its own signature call so the call says which preset follows. The mode would then only pick how we broadcast and replicate.
+
 ## License
 
 Apache-2.0
