@@ -80,16 +80,16 @@ Measured on a MacBook, speaker to its own mic, writer and reader as separate pro
 
 A broadcast is data on the inaudible band, but people can hear something pleasant while it goes out. Pick a `sound` and it plays for as long as the broadcast is on air, starting with it. Listeners ignore it, it is only for people:
 
-| sound      | sounds like                                         |
-| ---------- | --------------------------------------------------- |
-| `keet`     | a little flock around the Keet notification whistle |
-| `calm`     | a slow, relaxed songbird                            |
-| `trill`    | one quick bird                                      |
-| `duet`     | two birds, low and high                             |
-| `musicbox` | bell melody over an accompaniment, pentatonic       |
-| `chime`    | a single bell melody, pentatonic                    |
+| sound      | sounds like                                                    |
+| ---------- | -------------------------------------------------------------- |
+| `keet`     | birdsong with Keet's notification whistle as one of its chirps |
+| `calm`     | a slow, relaxed songbird                                       |
+| `trill`    | one quick bird                                                 |
+| `duet`     | two birds, low and high                                        |
+| `musicbox` | bell melody over an accompaniment, pentatonic                  |
+| `chime`    | a single bell melody, pentatonic                               |
 
-Or pass your own mono f32 samples. `bare bench/song.js [seconds]` renders each sound to `.demo/song-<sound>.wav` to listen to.
+Or pass your own mono f32 samples. `bare bench/song.js [seconds]` renders each sound to `.demo/song-<sound>.wav` to listen to, and `bare bench/broadcast.js [sound] [message]` renders a whole broadcast as the room hears it, the sound plus the inaudible data, and decodes it back.
 
 In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 words per minute by default, framed by the KA and AR prosigns, so anyone who knows Morse can read it by ear. It takes and delivers strings, upper case and with only what Morse can carry (letters, digits and common punctuation, but not `+`, which is the AR prosign). "Hello from hyperwave" takes 15 s at 20 wpm. `bare bench/morse.js "some text"` renders `.demo/morse-<wpm>wpm.wav`.
 
@@ -107,7 +107,7 @@ In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 wor
 
 **Morse.** Tone on and off times are measured in 5 ms blocks against an adaptive threshold, the noise floor averaged over quiet blocks only, and read as dots, dashes and gaps against the known speed. Blips much shorter than a dot are folded back into the silence.
 
-**Broadcasts.** One message with 50% parity on the control band, sent ahead of queued data, with the sound starting as it goes on air. The Keet sound follows the contour of Keet's notification whistle (a dip, a swoop up to a held top near 3 kHz and back) with varied pitch and length, chirps, trills and a little echo.
+**Broadcasts.** One message with 50% parity on the control band, sent ahead of queued data, with the sound starting as it goes on air. The Keet sound is birdsong the way birds sing it, short fast syllables repeated in little phrases that speed up, with Keet's notification whistle squeezed into one of its chirps.
 
 ## Throughput
 
