@@ -8,12 +8,10 @@ const Demodulator = require('./lib/demodulator')
 const Replicator = require('./lib/replicator')
 const Connection = require('./lib/connection')
 const Song = require('./lib/song')
-const SongModulator = require('./lib/song-modulator')
-const SongDemodulator = require('./lib/song-demodulator')
 const Morse = require('./lib/morse')
 const MorseModulator = require('./lib/morse-modulator')
 const MorseDemodulator = require('./lib/morse-demodulator')
-const { REPAIR, BROADCAST, message } = require('./lib/messages')
+const { REPAIR, BROADCAST, message: messageEncoding } = require('./lib/messages')
 
 const NO_CORE = new Uint8Array(4)
 
@@ -24,10 +22,8 @@ const MODES = {
   silent: { protocol: 'INAUDIBLE', controlProtocol: null }
 }
 
-// voice modes sing or tap out broadcasts and replicate on the inaudible band underneath
-for (const voice of [...Song.presets, 'morse']) {
-  MODES[voice] = { protocol: 'INAUDIBLE', controlProtocol: null, voice }
-}
+// morse taps broadcasts out for people to read and replicates on the inaudible band underneath
+MODES.morse = { protocol: 'INAUDIBLE', controlProtocol: null, morse: true }
 
 module.exports = class Hyperwave extends ReadyResource {
   constructor(audio, opts = {}) {
@@ -50,8 +46,16 @@ module.exports = class Hyperwave extends ReadyResource {
       adaptive: opts.adaptive ?? true,
       dedup: (opts.retry ?? 10000) / 2
     })
+    // broadcasts ride the control band, several frames with no one to ask for repairs, so more parity
     this.control =
-      controlProtocol === null ? this.data : new Channel({ ...opts, protocol: controlProtocol })
+      controlProtocol === null
+        ? this.data
+        : new Channel({
+            ...opts,
+            protocol: controlProtocol,
+            parity: opts.broadcastParity ?? 0.5,
+            adaptive: false
+          })
     this.channels = this.control === this.data ? [this.data] : [this.control, this.data]
     this.mixer = new Mixer(opts)
     this.demodulator = new Demodulator({
@@ -61,10 +65,10 @@ module.exports = class Hyperwave extends ReadyResource {
     this.replicators = new Map()
     this.connection = null
 
-    this.voice = mode.voice ?? null
-    const [voiceModulator, voiceDemodulator] = createVoice(this.voice, opts)
-    this.voiceModulator = voiceModulator
-    this.voiceDemodulator = voiceDemodulator
+    const morse = mode.morse ? new Morse({ ...opts, volume: opts.soundVolume ?? 0.3 }) : null
+    this.morseModulator = morse === null ? null : new MorseModulator(morse)
+    this.morseDemodulator = morse === null ? null : new MorseDemodulator(morse)
+    this.sound = createSound(opts.sound ?? null, opts)
     this.broadcastWindow = opts.broadcastWindow ?? 30000
 
     this.retry = opts.retry ?? 10000
@@ -73,6 +77,7 @@ module.exports = class Hyperwave extends ReadyResource {
     this.stall = opts.stall ?? 1500
 
     this._stalls = null
+    this._sounds = null
     this._needs = new Map()
     this._heard = new Map()
     this._broadcasts = 0
@@ -99,9 +104,14 @@ module.exports = class Hyperwave extends ReadyResource {
     }
     pipeline(this.demodulator, this._receive(), onerror)
 
-    if (this.voice !== null) {
-      pipeline(this.voiceModulator, this.mixer.input(), onerror)
-      pipeline(this.voiceDemodulator, this._voices(), onerror)
+    if (this.morseModulator !== null) {
+      pipeline(this.morseModulator, this.mixer.input(), onerror)
+      pipeline(this.morseDemodulator, this._morse(), onerror)
+    }
+
+    if (this.sound !== null) {
+      this._sounds = this.mixer.input()
+      this._sounds.on('error', onerror)
     }
 
     this.audio.on('error', onerror)
@@ -119,7 +129,7 @@ module.exports = class Hyperwave extends ReadyResource {
     this.connection = new Connection(this)
     this.emit('connection', this.connection, {
       protocols: this.channels.map((ch) => ch.protocol),
-      voice: this.voice
+      sound: this.sound === null ? null : this.sound.name
     })
   }
 
@@ -133,10 +143,11 @@ module.exports = class Hyperwave extends ReadyResource {
 
     for (const ch of this.channels) ch.destroy()
     this.demodulator.destroy()
-    if (this.voice !== null) {
-      this.voiceModulator.destroy()
-      this.voiceDemodulator.destroy()
+    if (this.morseModulator !== null) {
+      this.morseModulator.destroy()
+      this.morseDemodulator.destroy()
     }
+    if (this._sounds !== null) this._sounds.destroy()
     this.mixer.destroy()
     this.audio.destroy()
 
@@ -162,31 +173,41 @@ module.exports = class Hyperwave extends ReadyResource {
     replicator.start()
   }
 
-  // one message for everyone in earshot, sung or tapped out in a voice mode, returns once queued
+  // one message for everyone in earshot, returns once queued. A buffer, sent on the control band
+  // with the sound playing along, or a string tapped out as Morse in morse mode
   broadcast(message) {
-    if (this.voice === 'morse') {
+    if (this.morseModulator !== null) {
+      const text = typeof message === 'string' ? message : b4a.toString(message)
       // listeners hear it upper case and without what Morse cannot carry, so will we
-      this._remember(b4a.from(Morse.normalise(b4a.toString(message))))
-      this.voiceModulator.write(message)
+      this._remember(b4a.from(Morse.normalise(text)))
+      this.morseModulator.write(b4a.from(text))
       return
     }
 
     this._remember(message)
 
-    if (this.voice !== null) {
-      this.voiceModulator.write(message)
-      return
-    }
+    // small and meant for now, so ahead of queued data
+    this.control.schedule(
+      'broadcast:' + this._broadcasts++,
+      () => {
+        const m = { type: BROADCAST, id: NO_CORE, body: message }
+        this._play(this.control.airtime(c.encode(messageEncoding, m).byteLength))
+        return m
+      },
+      { urgent: true }
+    )
+  }
 
-    this.data.schedule('broadcast:' + this._broadcasts++, () => ({
-      type: BROADCAST,
-      id: NO_CORE,
-      body: message
-    }))
+  // the sound starts with the data and lasts as long, it is for people, listeners ignore it
+  _play(seconds) {
+    if (this._sounds === null) return
+    const samples = this.sound.render(seconds)
+    this._sounds.write(b4a.from(samples.buffer, samples.byteOffset, samples.byteLength))
   }
 
   _onbroadcast(message) {
-    if (this._remember(message)) this.emit('broadcast', message)
+    if (!this._remember(message)) return
+    this.emit('broadcast', this.morseModulator === null ? message : b4a.toString(message))
   }
 
   // true if the message is news, repeats and our own echo within the window are not
@@ -208,7 +229,9 @@ module.exports = class Hyperwave extends ReadyResource {
   // the mic feeds every decoder
   _listeners() {
     const decoders =
-      this.voice !== null ? [this.demodulator, this.voiceDemodulator] : [this.demodulator]
+      this.morseDemodulator === null
+        ? [this.demodulator]
+        : [this.demodulator, this.morseDemodulator]
     return new Writable({
       write(pcm, cb) {
         for (const decoder of decoders) decoder.write(pcm)
@@ -217,7 +240,7 @@ module.exports = class Hyperwave extends ReadyResource {
     })
   }
 
-  _voices() {
+  _morse() {
     return new Writable({
       write: (message, cb) => {
         this._onbroadcast(message)
@@ -239,7 +262,7 @@ module.exports = class Hyperwave extends ReadyResource {
   _onmessage(buf) {
     let m = null
     try {
-      m = c.decode(message, buf)
+      m = c.decode(messageEncoding, buf)
     } catch {
       // anything in earshot can land here, undecodable messages are noise
       return
@@ -298,20 +321,18 @@ module.exports = class Hyperwave extends ReadyResource {
   }
 }
 
-// a sound for broadcasts: a song preset or morse, both at a level that leaves the data headroom
-function createVoice(name, opts) {
-  if (name === null) return [null, null]
+// what people hear while a broadcast goes out: a song preset or your own f32 samples, at a level
+// that leaves the data headroom
+function createSound(sound, opts) {
+  if (sound === null) return null
+  if (typeof sound !== 'string') return { name: 'custom', render: () => sound }
 
-  const sampleRate = opts.sampleRate ?? 48000
-  const volume = opts.voiceVolume ?? 0.3
-
-  if (name === 'morse') {
-    const morse = new Morse({ sampleRate, volume, wpm: opts.wpm })
-    return [new MorseModulator(morse), new MorseDemodulator(morse)]
-  }
-
-  const song = new Song({ preset: name, sampleRate, volume })
-  return [new SongModulator(song), new SongDemodulator(song)]
+  const song = new Song({
+    preset: sound,
+    sampleRate: opts.sampleRate,
+    volume: opts.soundVolume ?? 0.3
+  })
+  return { name: sound, render: (seconds) => song.render(seconds) }
 }
 
 function repairKey(message, k) {

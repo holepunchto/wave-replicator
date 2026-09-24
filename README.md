@@ -7,7 +7,7 @@
 <p align="center">
   <b>Hypercore over sound</b>
   <br>
-  Replicate to everyone in earshot, broadcast invites as birdsong, music or Morse
+  Replicate to everyone in earshot, broadcast invites with birdsong on top
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@ Any device with a speaker and a mic can join. A writer turns hypercore blocks in
                ◄───────── wants and repairs, control band ◄────────┘
 ```
 
-Broadcasts carry small messages such as room invites. In a voice mode they are sung as birdsong or a music box, or tapped out in Morse, while replication carries on inaudibly underneath. Built on [bare-ggwave](https://github.com/holepunchto/bare-ggwave).
+Broadcasts carry small messages such as room invites, on the inaudible band with birdsong or bells playing on top for people, or as plain Morse code. Built on [bare-ggwave](https://github.com/holepunchto/bare-ggwave).
 
 ## Installation
 
@@ -51,7 +51,7 @@ const wave = new Hyperwave(audio, { mode: 'fast' }) // audio: streamx Duplex of 
 wave.join()
 wave.on('connection', (conn) => conn.replicate(store))
 
-wave.broadcast(invite) // one message for everyone in earshot
+wave.broadcast(invite) // one message for everyone in earshot, sound: 'keet' plays birds with it
 wave.on('broadcast', (message) => {})
 ```
 
@@ -62,34 +62,36 @@ The connection is the air shared with everyone listening, emitted once the audio
 ```
 bare examples/demo.js 4 256        # writer, 4 blocks of 256 bytes, prints the key
 bare examples/demo.js <key>        # reader, in another process or on another device
-MODE=duet BROADCAST='hello' bare examples/demo.js 4 256   # also sing a broadcast
+MODE=silent SOUND=keet BROADCAST='hello' bare examples/demo.js 4 256   # broadcast with birds
 ```
 
 ## Modes
 
-| mode                                         | replication bands                                          | broadcasts        | 1 KB end to end |
-| -------------------------------------------- | ---------------------------------------------------------- | ----------------- | --------------- |
-| `fast`                                       | data 2.1 - 10.7 kHz (custom), control 18.8 - 21.7 kHz      | on the data band  | 44 s, 23 B/s    |
-| `standard`                                   | data 2.1 - 6.2 kHz, control 15.2 - 19.3 kHz (stock ggwave) | on the data band  | 85 s, 12 B/s    |
-| `silent`                                     | one band, 18.8 - 21.7 kHz, inaudible to most people        | on the data band  | 116 s, 8.8 B/s  |
-| `calm`, `trill`, `duet`, `chime`, `musicbox` | one band, 18.8 - 21.7 kHz, underneath the song             | sung              | 117 s, 8.7 B/s  |
-| `morse`                                      | one band, 18.8 - 21.7 kHz, underneath the Morse            | Morse code, ASCII | as `silent`     |
+| mode       | replication bands                                          | broadcasts                     | 1 KB end to end |
+| ---------- | ---------------------------------------------------------- | ------------------------------ | --------------- |
+| `fast`     | data 2.1 - 10.7 kHz (custom), control 18.8 - 21.7 kHz      | control band, inaudible        | 44 s, 23 B/s    |
+| `standard` | data 2.1 - 6.2 kHz, control 15.2 - 19.3 kHz (stock ggwave) | control band, ultrasound       | 85 s, 12 B/s    |
+| `silent`   | one band, 18.8 - 21.7 kHz, inaudible to most people        | the same band                  | 116 s, 8.8 B/s  |
+| `morse`    | one band, 18.8 - 21.7 kHz, underneath the Morse            | Morse code, readable by people | as `silent`     |
 
-Measured on a MacBook, speaker to its own mic, writer and reader as separate processes, 1 KB as 4 blocks of 256 B, with no resends.
+Measured on a MacBook, speaker to its own mic, writer and reader as separate processes, 1 KB as 4 blocks of 256 B, with no resends. `fast`, `silent` and `morse` share the inaudible band, so they hear each other's broadcasts.
 
-In a song mode broadcasts are sung, so people hear something pleasant, while replication carries on inaudibly underneath:
+## Sounds
 
-| song       | sounds like                                   | 47 byte invite |
-| ---------- | --------------------------------------------- | -------------- |
-| `duet`     | two birds, low and high                       | 5.2 s          |
-| `trill`    | one quick bird                                | 6.7 s          |
-| `musicbox` | bell melody over an accompaniment, pentatonic | 12.8 s         |
-| `calm`     | a slow, relaxed songbird                      | 17.4 s         |
-| `chime`    | a single bell melody, pentatonic              | 21.4 s         |
+A broadcast is data on the inaudible band, but people can hear something pleasant while it goes out. Pick a `sound` and it plays for as long as the broadcast is on air, starting with it. Listeners ignore it, it is only for people:
 
-`bare bench/song.js` renders each preset to `.demo/song-<preset>.wav` to listen to.
+| sound      | sounds like                                         |
+| ---------- | --------------------------------------------------- |
+| `keet`     | a little flock around the Keet notification whistle |
+| `calm`     | a slow, relaxed songbird                            |
+| `trill`    | one quick bird                                      |
+| `duet`     | two birds, low and high                             |
+| `musicbox` | bell melody over an accompaniment, pentatonic       |
+| `chime`    | a single bell melody, pentatonic                    |
 
-In `morse` mode broadcasts are plain Morse code, a 700 Hz tone at 20 words per minute by default, framed by the KA and AR prosigns. Anyone who knows Morse can read it by ear. Listeners receive the text upper case, with only what Morse can carry (letters, digits and common punctuation, but not `+`, which is the AR prosign). "Hello from hyperwave" takes 15 s at 20 wpm. `bare bench/morse.js "some text"` renders `.demo/morse-<wpm>wpm.wav`.
+Or pass your own mono f32 samples. `bare bench/song.js [seconds]` renders each sound to `.demo/song-<sound>.wav` to listen to.
+
+In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 words per minute by default, framed by the KA and AR prosigns, so anyone who knows Morse can read it by ear. It takes and delivers strings, upper case and with only what Morse can carry (letters, digits and common punctuation, but not `+`, which is the AR prosign). "Hello from hyperwave" takes 15 s at 20 wpm. `bare bench/morse.js "some text"` renders `.demo/morse-<wpm>wpm.wav`.
 
 ## How it works
 
@@ -105,7 +107,7 @@ In `morse` mode broadcasts are plain Morse code, a 700 Hz tone at 20 words per m
 
 **Morse.** Tone on and off times are measured in 5 ms blocks against an adaptive threshold, the noise floor averaged over quiet blocks only, and read as dots, dashes and gaps against the known speed. Blips much shorter than a dot are folded back into the silence.
 
-**Songs.** Every symbol is a note: bird tweets (a glide into a held pitch, 2 - 8 kHz) or pentatonic bells with inharmonic partials so octaves never alias. A song opens with a signature call, then a header, then the message with a crc16 and Reed-Solomon parity. Listeners track each note's onset, so timing slips on real devices do not derail a song, and rebuild the least confident bytes.
+**Broadcasts.** One message with 50% parity on the control band, sent ahead of queued data, with the sound starting as it goes on air. The Keet sound follows the contour of Keet's notification whistle (a dip, a swoop up to a held top near 3 kHz and back) with varied pitch and length, chirps, trills and a little echo.
 
 ## Throughput
 
@@ -158,7 +160,9 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
   protocol: 'AUDIBLE_FASTEST', // data band, overrides the mode
   controlProtocol: 'ULTRASOUND_FASTEST', // control band, null to share the data band
   volume: 50,
-  voiceVolume: 0.3, // song or Morse level in a voice mode, leaves headroom for the data underneath
+  sound: null, // what people hear during a broadcast, see Sounds, or your own f32 samples
+  soundVolume: 0.3, // sound and Morse level, leaves headroom for the data underneath
+  broadcastParity: 0.5, // parity for broadcasts on the control band
   wpm: 20, // Morse speed in words per minute
   sampleRate: 48000,
   frameSize: 16, // bytes per ggwave frame, up to 64
@@ -182,7 +186,7 @@ Start listening and transmitting. Everyone in earshot is one room for now, so no
 
 #### `wave.on('connection', (conn, info) => {})`
 
-Emitted once the audio is set up. `info.protocols` lists the bands in use and `info.voice` the song preset or `morse`, if any.
+Emitted once the audio is set up. `info.protocols` lists the bands in use and `info.sound` the sound, if any.
 
 #### `conn.replicate(store | core)`
 
@@ -190,11 +194,11 @@ Replicate a single core, or every core a corestore has open now or opens later.
 
 #### `wave.broadcast(message)`
 
-Send one message to everyone in earshot: sung in a song mode (up to 255 bytes), tapped out as Morse in `morse` mode (ASCII text), or as one message on the data band otherwise.
+Send one message to everyone in earshot. A buffer, on the control band with the sound playing along, or a string tapped out as Morse in `morse` mode.
 
 #### `wave.on('broadcast', (message) => {})`
 
-A broadcast from someone else. Repeats and our own echo within `broadcastWindow` are dropped.
+A broadcast from someone else, a buffer, or a string in `morse` mode. Repeats and our own echo within `broadcastWindow` are dropped.
 
 #### `wave.stats`
 
@@ -204,7 +208,8 @@ Frame and message counters per band.
 
 ## Todo
 
-- Detect the broadcast type. Today a listener only hears broadcasts in its own mode, for example a `duet` listener does not decode `calm` or `morse`. Listen for every voice and data band at once, and give each song preset its own signature call so the call says which preset follows. The mode would then only pick how we broadcast and replicate.
+- Listen on every band at once, so a `standard` listener also hears broadcasts sent on the inaudible band and the other way around.
+- Test the inaudible band on phones, their speakers and mics often roll off around 19 - 20 kHz.
 
 ## License
 

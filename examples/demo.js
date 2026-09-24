@@ -1,7 +1,8 @@
 // bare examples/demo.js [blocks] [size]   -> writer, prints the key
 // bare examples/demo.js <key>             -> reader
 //
-// MODE=fast|standard|silent|duet|...       the Hyperwave mode, standard by default
+// MODE=fast|standard|silent|morse         the Hyperwave mode, standard by default
+// SOUND=calm|trill|duet|chime|musicbox     plays along with broadcasts
 // PROTOCOL=... CONTROL=...|none            override the bands
 // BROADCAST=text BROADCAST_DELAY=ms        broadcast once connected
 const process = require('bare-process')
@@ -38,6 +39,7 @@ async function main() {
   const audio = new Audio()
   const wave = new Hyperwave(audio, {
     mode,
+    sound: process.env.SOUND,
     protocol: process.env.PROTOCOL,
     controlProtocol: process.env.CONTROL === 'none' ? null : process.env.CONTROL,
     announceInterval: 15000
@@ -53,7 +55,9 @@ async function main() {
     }
   })
   wave.on('broadcast', (message) =>
-    console.log(`${elapsed()}s broadcast: ${b4a.toString(message)}`)
+    console.log(
+      `${elapsed()}s broadcast: ${typeof message === 'string' ? message : b4a.toString(message)}`
+    )
   )
 
   const log = () =>

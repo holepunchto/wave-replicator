@@ -270,18 +270,20 @@ test('broadcast - repeats are not news', async (t) => {
   await new Promise((resolve) => b.once('broadcast', resolve))
 
   // the same message from someone else arrives, but is not news
-  const received = b.stats.data.messagesReceived
+  const received = b.stats.control.messagesReceived
   c.broadcast(b4a.from('once'))
-  while (b.stats.data.messagesReceived === received) await new Promise((r) => setTimeout(r, 10))
+  while (b.stats.control.messagesReceived === received) await new Promise((r) => setTimeout(r, 10))
 
   a.broadcast(b4a.from('twice'))
   await new Promise((resolve) => b.on('broadcast', (m) => b4a.toString(m) === 'twice' && resolve()))
   t.alike(heard, ['once', 'twice'])
 })
 
-test('broadcast - sung in a song mode', async (t) => {
+test('broadcast - a sound plays along, the data goes on the control band', async (t) => {
   const air = new Air()
-  const [a, b] = [0, 1].map(() => new Hyperwave(air.connect(), { ...FAST, mode: 'duet' }))
+  const [a, b] = [0, 1].map(
+    () => new Hyperwave(air.connect(), { ...FAST, mode: 'silent', sound: 'duet' })
+  )
   t.teardown(() => Promise.all([a.close(), b.close()]))
 
   a.join()
@@ -291,7 +293,7 @@ test('broadcast - sung in a song mode', async (t) => {
     a.once('connection', (...args) => resolve(args))
   )
   t.ok(conn)
-  t.is(info.voice, 'duet')
+  t.is(info.sound, 'duet')
 
   const heard = new Promise((resolve) => b.once('broadcast', resolve))
   a.broadcast(b4a.from('pear://keet/invite'))
@@ -313,14 +315,14 @@ test('broadcast - tapped out in morse', async (t) => {
   })
 
   const heard = new Promise((resolve) => b.once('broadcast', resolve))
-  a.broadcast(b4a.from('Hello from hyperwave!'))
+  a.broadcast('Hello from hyperwave!')
 
-  t.alike(await heard, b4a.from('HELLO FROM HYPERWAVE!'))
+  t.is(await heard, 'HELLO FROM HYPERWAVE!')
   t.absent(echo)
 })
 
-test('broadcast - replication keeps running under a song', async (t) => {
-  const { writer, readers, waves } = await setup(t, { readers: 1, mode: 'trill' })
+test('broadcast - replication keeps running while a sound plays', async (t) => {
+  const { writer, readers, waves } = await setup(t, { readers: 1, mode: 'silent', sound: 'trill' })
 
   for (let i = 0; i < 2; i++) await writer.append(b4a.from('block ' + i))
 
@@ -340,6 +342,7 @@ async function setup(t, opts) {
     const w = new Hyperwave(air.connect(), {
       ...FAST,
       mode: opts.mode,
+      sound: opts.sound,
       controlProtocol: opts.controlProtocol,
       parity: opts.parity,
       adaptive: opts.adaptive
