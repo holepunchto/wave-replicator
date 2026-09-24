@@ -1,0 +1,63 @@
+{
+  "name": "hyperwave",
+  "version": "0.0.0",
+  "description": "Broadcast hypercore blocks to everyone nearby over sound",
+  "main": "index.js",
+  "exports": {
+    "./package": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "imports": {
+    "events": {
+      "bare": "bare-events",
+      "default": "events"
+    }
+  },
+  "files": [
+    "package.json",
+    "index.js",
+    "index.d.ts",
+    "lib",
+    "logo.svg"
+  ],
+  "dependencies": {
+    "b4a": "^1.9.0",
+    "bare-events": "^2.9.2",
+    "bare-ggwave": "file:../bare-ggwave",
+    "compact-encoding": "^3.5.2",
+    "flat-tree": "^1.13.0",
+    "hypercore": "^11.37.0",
+    "ready-resource": "^1.2.0",
+    "safety-catch": "^1.0.3",
+    "scope-lock": "^1.2.4",
+    "streamx": "^2.28.1"
+  },
+  "devDependencies": {
+    "bare-ffmpeg": "^1.6.0",
+    "bare-fs": "^4.8.1",
+    "bare-process": "^4.5.1",
+    "brittle": "^3.19.0",
+    "corestore": "^7.12.6",
+    "lunte": "^1.2.0",
+    "prettier": "^3.6.2",
+    "prettier-config-holepunch": "^2.0.0"
+  },
+  "scripts": {
+    "format": "prettier . --write",
+    "test": "brittle-bare test/index.js",
+    "lint": "prettier . --check && lunte"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holepunchto/hyperwave.git"
+  },
+  "author": "Holepunch Inc",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/holepunchto/hyperwave/issues"
+  },
+  "homepage": "https://github.com/holepunchto/hyperwave"
+}

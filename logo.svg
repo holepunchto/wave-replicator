@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440" role="img" aria-label="hyperwave">
+  <defs>
+    <linearGradient id="armour" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f6fb5"/>
+      <stop offset="1" stop-color="#1c3564"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6ecf2"/>
+      <stop offset="1" stop-color="#9aa9b8"/>
+    </linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1a33"/>
+      <stop offset="1" stop-color="#050b18"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-80%" width="160%" height="260%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- shoulders -->
+  <path d="M40 300 L110 262 L290 262 L360 300 L360 400 L40 400 Z" fill="url(#armour)" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M40 300 L110 262 L130 300 L130 400 L40 400 Z" fill="#2c528e" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M360 300 L290 262 L270 300 L270 400 L360 400 Z" fill="#2c528e" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- chest deck with equaliser bars -->
+  <rect x="140" y="300" width="120" height="84" rx="8" fill="url(#deck)" stroke="#9aa9b8" stroke-width="5"/>
+  <g fill="#35e0ff" filter="url(#glow)">
+    <rect x="154" y="352" width="10" height="20" rx="2"/>
+    <rect x="170" y="330" width="10" height="42" rx="2"/>
+    <rect x="186" y="318" width="10" height="54" rx="2"/>
+    <rect x="202" y="338" width="10" height="34" rx="2"/>
+    <rect x="218" y="324" width="10" height="48" rx="2"/>
+    <rect x="234" y="346" width="10" height="26" rx="2"/>
+  </g>
+
+  <!-- neck -->
+  <rect x="172" y="236" width="56" height="34" fill="#6d7f93" stroke="#0e1d3a" stroke-width="5"/>
+
+  <!-- head -->
+  <path d="M200 30 L292 66 L312 150 L286 232 L200 262 L114 232 L88 150 L108 66 Z" fill="url(#armour)" stroke="#0e1d3a" stroke-width="7" stroke-linejoin="round"/>
+
+  <!-- crest -->
+  <path d="M200 12 L226 44 L214 96 L186 96 L174 44 Z" fill="#5d8fd6" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- ear speakers -->
+  <g stroke="#0e1d3a" stroke-width="5" stroke-linejoin="round">
+    <path d="M88 118 L62 128 L62 196 L90 204 Z" fill="#2c528e"/>
+    <path d="M312 118 L338 128 L338 196 L310 204 Z" fill="#2c528e"/>
+  </g>
+  <g stroke="#9fc4ff" stroke-width="3" stroke-linecap="round">
+    <line x1="70" y1="146" x2="80" y2="146"/>
+    <line x1="70" y1="162" x2="80" y2="162"/>
+    <line x1="70" y1="178" x2="80" y2="178"/>
+    <line x1="320" y1="146" x2="330" y2="146"/>
+    <line x1="320" y1="162" x2="330" y2="162"/>
+    <line x1="320" y1="178" x2="330" y2="178"/>
+  </g>
+
+  <!-- visor with a waveform -->
+  <path d="M112 128 L288 128 L296 176 L104 176 Z" fill="#0a0f1f" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M116 152 L136 152 L144 140 L152 166 L160 132 L168 172 L176 144 L184 158 L200 152 L216 158 L224 144 L232 172 L240 132 L248 166 L256 140 L264 152 L284 152" fill="none" stroke="#ff4a4a" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- faceplate -->
+  <path d="M132 186 L268 186 L256 232 L200 250 L144 232 Z" fill="url(#steel)" stroke="#0e1d3a" stroke-width="6" stroke-linejoin="round"/>
+  <g stroke="#6d7f93" stroke-width="4" stroke-linecap="round">
+    <line x1="180" y1="200" x2="180" y2="230"/>
+    <line x1="200" y1="200" x2="200" y2="238"/>
+    <line x1="220" y1="200" x2="220" y2="230"/>
+  </g>
+</svg>
