@@ -65,7 +65,8 @@ module.exports = class Hyperwave extends ReadyResource {
     this.replicators = new Map()
     this.connection = null
 
-    const morse = mode.morse ? new Morse({ ...opts, volume: opts.soundVolume ?? 0.3 }) : null
+    // Morse has to carry across a room by itself, so it plays well above the decorative sounds
+    const morse = mode.morse ? new Morse({ ...opts, volume: opts.morseVolume ?? 0.8 }) : null
     this.morseModulator = morse === null ? null : new MorseModulator(morse)
     this.morseDemodulator = morse === null ? null : new MorseDemodulator(morse)
     this.sound = createSound(opts.sound ?? null, opts)

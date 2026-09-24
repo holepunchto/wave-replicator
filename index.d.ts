@@ -12,6 +12,7 @@ interface HyperwaveOptions {
   volume?: number
   sound?: Sound | null
   soundVolume?: number
+  morseVolume?: number
   broadcastParity?: number
   wpm?: number
   sampleRate?: number

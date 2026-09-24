@@ -161,7 +161,8 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
   controlProtocol: 'ULTRASOUND_FASTEST', // control band, null to share the data band
   volume: 50,
   sound: null, // what people hear during a broadcast, see Sounds, or your own f32 samples
-  soundVolume: 0.3, // sound and Morse level, leaves headroom for the data underneath
+  soundVolume: 0.3, // sound level, leaves headroom for the data underneath
+  morseVolume: 0.8, // Morse level, loud enough to carry, clips only where it overlaps data
   broadcastParity: 0.5, // parity for broadcasts on the control band
   wpm: 20, // Morse speed in words per minute
   sampleRate: 48000,
