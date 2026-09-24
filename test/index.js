@@ -8,6 +8,9 @@ const Modulator = require('../lib/modulator')
 const Demodulator = require('../lib/demodulator')
 const Fragmenter = require('../lib/fragmenter')
 const Air = require('./helpers/air')
+const room = require('./helpers/room')
+const Morse = require('../lib/morse')
+const MorseDemodulator = require('../lib/morse-demodulator')
 
 const FAST = { backoff: 5, retry: 300, announceInterval: 200, stall: 50, holdoff: 20, gap: 20 }
 
@@ -319,6 +322,48 @@ test('broadcast - tapped out in morse', async (t) => {
 
   t.is(await heard, 'HELLO FROM HYPERWAVE!')
   t.absent(echo)
+})
+
+test('morse - read through echo, a swelling speaker and noise', async (t) => {
+  const morse = new Morse({ wpm: 40 })
+  const samples = room(morse.encode('hello from hyperwave'), { noise: 0.02 })
+
+  const demod = new MorseDemodulator(morse)
+  const heard = []
+  demod.on('data', (text) => heard.push(b4a.toString(text)))
+  const ended = new Promise((resolve) => demod.on('end', resolve))
+
+  for (let i = 0; i < samples.length; i += 4800) {
+    demod.write(b4a.from(samples.slice(i, i + 4800).buffer))
+  }
+  demod.end()
+  await ended
+
+  t.alike(heard, ['HELLO FROM HYPERWAVE'])
+})
+
+test('morse - noise and stray beeps are not messages', async (t) => {
+  const morse = new Morse()
+  const samples = new Float32Array(morse.sampleRate * 20)
+  for (let i = 0; i < samples.length; i++) {
+    const beep = Math.floor(i / 7000) % 3 === 0
+    samples[i] =
+      (beep ? 0.1 * Math.sin((2 * Math.PI * 700 * i) / morse.sampleRate) : 0) +
+      (Math.random() - 0.5) * 0.02
+  }
+
+  const demod = new MorseDemodulator(morse)
+  const heard = []
+  demod.on('data', (text) => heard.push(b4a.toString(text)))
+  const ended = new Promise((resolve) => demod.on('end', resolve))
+
+  for (let i = 0; i < samples.length; i += 4800) {
+    demod.write(b4a.from(samples.slice(i, i + 4800).buffer))
+  }
+  demod.end()
+  await ended
+
+  t.alike(heard, [])
 })
 
 test('broadcast - replication keeps running while a sound plays', async (t) => {

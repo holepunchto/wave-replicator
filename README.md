@@ -105,7 +105,7 @@ In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 wor
 
 **Push ahead.** A writer broadcasts the upgrade and new blocks as soon as it appends, and answering a want also sends the batch after it. Listeners only ask again once the data band has been quiet for a while.
 
-**Morse.** Tone on and off times are measured in 5 ms blocks against an adaptive threshold, the noise floor averaged over quiet blocks only, and read as dots, dashes and gaps against the known speed. Blips much shorter than a dot are folded back into the silence.
+**Morse.** The 700 Hz level is measured in 5 ms blocks, and each burst of sound between silences is read whole. The tone threshold is picked from the burst itself, so it adapts to how loud the sender is. Over the air dots come out weaker than dashes, and echo stretches every tone and shortens every gap by the same amount, so dots and dashes are told apart by comparing tone lengths with each other, and gaps are corrected by the measured stretch. A message that ends with AR is delivered even if its opening KA was garbled.
 
 **Broadcasts.** One message with 50% parity on the control band, sent ahead of queued data, with the sound starting as it goes on air. The Keet sound is birdsong the way birds sing it, short fast syllables repeated in little phrases that speed up, with Keet's notification whistle squeezed into one of its chirps.
 
