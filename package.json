@@ -8,6 +8,21 @@
     ".": {
       "types": "./index.d.ts",
       "default": "./index.js"
+    },
+    "./air": {
+      "types": "./lib/air.d.ts",
+      "default": "./lib/air.js"
+    },
+    "./broadcast": {
+      "types": "./lib/broadcast.d.ts",
+      "default": "./lib/broadcast.js"
+    },
+    "./morse": {
+      "types": "./lib/morse-broadcast.d.ts",
+      "default": "./lib/morse-broadcast.js"
+    },
+    "./ggwave": {
+      "default": "./lib/modems/ggwave.js"
     }
   },
   "imports": {
@@ -47,7 +62,7 @@
   },
   "scripts": {
     "format": "prettier . --write",
-    "test": "brittle-bare test/index.js test/broadcast.js",
+    "test": "brittle-bare test/index.js test/link.js test/broadcast.js test/morse.js test/ofdm.js",
     "lint": "prettier . --check && lunte"
   },
   "repository": {

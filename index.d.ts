@@ -1,50 +1,29 @@
 import ReadyResource from 'ready-resource'
-import { Duplex } from 'streamx'
+import Air from './lib/air'
 
-type Mode = 'standard' | 'fast' | 'silent' | 'morse' | 'ofdm' | 'ofdm-silent'
-
-type Sound = 'calm' | 'trill' | 'duet' | 'chime' | 'musicbox' | Float32Array
+interface Modem {
+  readonly maxPayload: number
+  airtime(bytes: number): number
+  encode(payload: Uint8Array): Float32Array
+}
 
 interface WaveReplicatorOptions {
-  mode?: Mode
-  protocol?: string
-  controlProtocol?: string | null
+  modem?: Modem
   volume?: number
-  sound?: Sound | null
-  soundVolume?: number
-  morseVolume?: number
-  broadcastParity?: number
-  wpm?: number
-  ofdmBits?: 1 | 2
-  ofdmFrameSize?: number
-  sampleRate?: number
-  frameSize?: number
-  fixed?: boolean
-  parity?: number
-  adaptive?: boolean
-  backoff?: number
-  retry?: number
-  stall?: number
-  holdoff?: number
-  gap?: number
+  batch?: number
   announceInterval?: number
   maxAnnounceInterval?: number
-  batch?: number
+  parity?: number
+  packetSize?: number
+  random?: () => number
 }
 
-interface ChannelStats {
-  framesSent: number
-  framesReceived: number
+interface LinkStats {
+  sent: number
+  received: number
   messagesSent: number
   messagesReceived: number
-  duplicates: number
-  corrupt: number
-  oversized: number
-}
-
-interface ConnectionInfo {
-  protocols: string[]
-  sound: string | null
+  echoes: number
 }
 
 declare class Connection {
@@ -52,16 +31,15 @@ declare class Connection {
 }
 
 declare class WaveReplicator extends ReadyResource {
-  constructor(audio: Duplex, opts?: WaveReplicatorOptions)
+  constructor(air: Air, opts?: WaveReplicatorOptions)
 
-  readonly mode: Mode
-  readonly stats: ChannelStats | { control: ChannelStats; data: ChannelStats }
+  readonly air: Air
+  readonly stats: LinkStats
+  readonly connection: Connection | null
 
   join(): void
-  broadcast(message: Uint8Array | string): void
 
-  on(event: 'connection', listener: (conn: Connection, info: ConnectionInfo) => void): this
-  on(event: 'broadcast', listener: (message: Uint8Array | string) => void): this
+  on(event: 'connection', listener: (conn: Connection) => void): this
   on(event: 'error', listener: (err: Error) => void): this
 }
 
