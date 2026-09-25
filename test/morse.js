@@ -18,6 +18,23 @@ test('morse - tapped out and read back, never by the sender', async (t) => {
   t.alike(phones[0].messages, [], 'no echo')
 })
 
+test('morse - sending and hearing come as start and end events', async (t) => {
+  const { phones } = await setup(t, 2)
+  const events = phones.map((p) => {
+    const e = []
+    for (const name of ['send-start', 'send-end', 'receive-start', 'receive-end', 'message']) {
+      p.morse.on(name, () => e.push(name))
+    }
+    return e
+  })
+
+  await phones[0].morse.send('hi')
+  await phones[1].air.sleep(2)
+
+  t.alike(events[0], ['send-start', 'send-end'], 'our own echo is not heard')
+  t.alike(events[1], ['receive-start', 'receive-end', 'message'])
+})
+
 test('morse - the same text from two phones arrives twice', async (t) => {
   const { phones } = await setup(t, 3)
 

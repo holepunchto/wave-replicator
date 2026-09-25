@@ -65,6 +65,24 @@ test('broadcast - the same text from two phones is delivered twice', async (t) =
   t.is(room.phones[2].messages.length, 2)
 })
 
+test('broadcast - copies and what others hear of them come as start and end events', async (t) => {
+  const room = await setup(t, { seed: 6, phones: 3 })
+  const events = room.phones.map((p) => record(p.broadcast))
+
+  await room.phones[0].broadcast.send(b4a.from('an invite'))
+  await room.phones[0].air.sleep(3)
+
+  const copies = room.phones[0].broadcast.stats.sent
+  t.is(events[0].filter((e) => e === 'send-start').length, copies, 'a send-start per copy')
+  t.is(events[0].filter((e) => e === 'send-end').length, copies, 'a send-end per copy')
+  t.absent(events[0].includes('receive-start'), 'our own copies are not heard as someone else')
+
+  for (const e of events.slice(1)) {
+    t.ok(e.indexOf('receive-start') < e.indexOf('message'), 'hearing starts before the message')
+    t.is(e.filter((x) => x === 'receive-start').length, e.filter((x) => x === 'receive-end').length)
+  }
+})
+
 async function setup(t, opts = {}) {
   const space = new Space({ seed: opts.seed, noise: opts.noise })
   const random = mulberry32(opts.seed)
@@ -106,6 +124,14 @@ async function setup(t, opts = {}) {
       return check(got)
     }
   }
+}
+
+function record(emitter) {
+  const events = []
+  for (const name of ['send-start', 'send-end', 'receive-start', 'receive-end', 'message']) {
+    emitter.on(name, () => events.push(name))
+  }
+  return events
 }
 
 function mulberry32(seed) {

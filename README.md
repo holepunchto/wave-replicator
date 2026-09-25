@@ -163,6 +163,14 @@ Resolves once the last copy has played. At most about 1 KB with OFDM, 140 bytes 
 
 Once per broadcast, never our own.
 
+#### `invites.on('send-start' | 'send-end', ({ id, copy, seconds }) => {})`
+
+As each copy of ours starts and stops playing. `copy` counts from 0, `seconds` is its time on air.
+
+#### `invites.on('receive-start' | 'receive-end', () => {})`
+
+Someone else's copy is on air: from when its header is read until it ends, whether it decoded or not. A `message` follows the end if it is a broadcast we had not heard yet. Our own copies coming back through the microphone are not reported.
+
 #### `const morse = new MorseBroadcast(air, [options])`
 
 ```js
@@ -176,6 +184,12 @@ Once per broadcast, never our own.
 #### `await morse.send(text)`
 
 #### `morse.on('message', (text) => {})`
+
+#### `morse.on('send-start' | 'send-end', ({ text, seconds }) => {})`
+
+#### `morse.on('receive-start' | 'receive-end', () => {})`
+
+A burst of sound at the Morse frequency, from its first tone until a word gap of quiet, then `message` if it read as Morse. Any sound near the frequency starts one, so not every burst ends in a message.
 
 #### `const wave = new WaveReplicator(air, [options])`
 

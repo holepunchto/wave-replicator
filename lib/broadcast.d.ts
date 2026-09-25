@@ -30,6 +30,11 @@ declare class Broadcast extends EventEmitter {
   destroy(): void
 
   on(event: 'message', listener: (payload: Uint8Array, info: { id: Uint8Array }) => void): this
+  on(
+    event: 'send-start' | 'send-end',
+    listener: (info: { id: Uint8Array; copy: number; seconds: number }) => void
+  ): this
+  on(event: 'receive-start' | 'receive-end', listener: () => void): this
 }
 
 export = Broadcast

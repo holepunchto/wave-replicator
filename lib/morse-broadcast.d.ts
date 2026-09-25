@@ -17,6 +17,11 @@ declare class MorseBroadcast extends EventEmitter {
   destroy(): void
 
   on(event: 'message', listener: (text: string) => void): this
+  on(
+    event: 'send-start' | 'send-end',
+    listener: (info: { text: string; seconds: number }) => void
+  ): this
+  on(event: 'receive-start' | 'receive-end', listener: () => void): this
 }
 
 export = MorseBroadcast
