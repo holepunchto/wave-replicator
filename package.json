@@ -67,12 +67,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/holepunchto/hyperwave.git"
+    "url": "https://github.com/holepunchto/wave-replicator.git"
   },
   "author": "Holepunch Inc",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/holepunchto/hyperwave/issues"
+    "url": "https://github.com/holepunchto/wave-replicator/issues"
   },
-  "homepage": "https://github.com/holepunchto/hyperwave"
+  "homepage": "https://github.com/holepunchto/wave-replicator"
 }
