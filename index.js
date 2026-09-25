@@ -15,6 +15,9 @@ const { REPAIR, BROADCAST, message: messageEncoding } = require('./lib/messages'
 
 const NO_CORE = new Uint8Array(4)
 
+// how long after our own Morse ends its echo may still be decoded
+const ECHO_GRACE = 3000
+
 // data band and control band, null control shares the data band
 const MODES = {
   standard: { protocol: 'AUDIBLE_FASTEST', controlProtocol: 'ULTRASOUND_FASTEST' },
@@ -70,7 +73,6 @@ module.exports = class Hyperwave extends ReadyResource {
     this.morseModulator = morse === null ? null : new MorseModulator(morse)
     this.morseDemodulator = morse === null ? null : new MorseDemodulator(morse)
     this.sound = createSound(opts.sound ?? null, opts)
-    this.broadcastWindow = opts.broadcastWindow ?? 30000
 
     this.retry = opts.retry ?? 10000
     this.announceInterval = opts.announceInterval ?? 60000
@@ -80,7 +82,8 @@ module.exports = class Hyperwave extends ReadyResource {
     this._stalls = null
     this._sounds = null
     this._needs = new Map()
-    this._heard = new Map()
+    this._tapping = []
+    this._tappedUntil = 0
     this._broadcasts = 0
   }
 
@@ -179,13 +182,10 @@ module.exports = class Hyperwave extends ReadyResource {
   broadcast(message) {
     if (this.morseModulator !== null) {
       const text = typeof message === 'string' ? message : b4a.toString(message)
-      // listeners hear it upper case and without what Morse cannot carry, so will we
-      this._remember(b4a.from(Morse.normalise(text)))
+      this._tap(text)
       this.morseModulator.write(b4a.from(text))
       return
     }
-
-    this._remember(message)
 
     // small and meant for now, so ahead of queued data
     this.control.schedule(
@@ -206,25 +206,35 @@ module.exports = class Hyperwave extends ReadyResource {
     this._sounds.write(b4a.from(samples.buffer, samples.byteOffset, samples.byteLength))
   }
 
+  // our own frames are dropped by id before they get here, our own Morse has no id so is dropped
+  // by what it says while it is on air
   _onbroadcast(message) {
-    if (!this._remember(message)) return
-    this.emit('broadcast', this.morseModulator === null ? message : b4a.toString(message))
-  }
-
-  // true if the message is news, repeats and our own echo within the window are not
-  _remember(message) {
-    const now = Date.now()
-    const key = b4a.toString(message, 'hex')
-
-    for (const [k, at] of this._heard) {
-      if (now - at < this.broadcastWindow) break
-      this._heard.delete(k)
+    if (this.morseModulator === null) {
+      this.emit('broadcast', message)
+      return
     }
 
-    const news = !this._heard.has(key)
-    this._heard.delete(key)
-    this._heard.set(key, now)
-    return news
+    const text = b4a.toString(message)
+    const now = Date.now()
+    this._tapping = this._tapping.filter((t) => t.until > now)
+
+    const own = this._tapping.findIndex((t) => t.text === text)
+    if (own !== -1) {
+      this._tapping.splice(own, 1)
+      return
+    }
+
+    this.emit('broadcast', text)
+  }
+
+  // Morse queues behind what is already playing, and is decoded a little after it ends
+  _tap(text) {
+    const morse = this.morseModulator.morse
+    const seconds = morse.encode(text).length / morse.sampleRate
+    const from = Math.max(Date.now(), this._tappedUntil)
+    this._tappedUntil = from + seconds * 1000
+    // listeners hear it upper case and without what Morse cannot carry, so will we
+    this._tapping.push({ text: Morse.normalise(text), until: this._tappedUntil + ECHO_GRACE })
   }
 
   // the mic feeds every decoder

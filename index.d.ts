@@ -27,7 +27,6 @@ interface HyperwaveOptions {
   gap?: number
   announceInterval?: number
   batch?: number
-  broadcastWindow?: number
 }
 
 interface ChannelStats {

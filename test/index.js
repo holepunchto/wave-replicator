@@ -258,7 +258,7 @@ test('broadcast - reaches everyone in earshot, not the sender', async (t) => {
   t.absent(echo)
 })
 
-test('broadcast - repeats are not news', async (t) => {
+test('broadcast - the same message from someone else still arrives', async (t) => {
   const air = new Air()
   const [a, b, c] = [0, 1, 2].map(() => new Hyperwave(air.connect(), FAST))
   t.teardown(() => Promise.all([a.close(), b.close(), c.close()]))
@@ -269,17 +269,17 @@ test('broadcast - repeats are not news', async (t) => {
   const heard = []
   b.on('broadcast', (m) => heard.push(b4a.toString(m)))
 
-  a.broadcast(b4a.from('once'))
+  a.broadcast(b4a.from('hello world'))
   await new Promise((resolve) => b.once('broadcast', resolve))
 
-  // the same message from someone else arrives, but is not news
-  const received = b.stats.control.messagesReceived
-  c.broadcast(b4a.from('once'))
-  while (b.stats.control.messagesReceived === received) await new Promise((r) => setTimeout(r, 10))
+  // two phones sending the default text: the one that just sent it still hears the other
+  const echoed = new Promise((resolve) => a.once('broadcast', resolve))
+  const again = new Promise((resolve) => b.once('broadcast', resolve))
+  c.broadcast(b4a.from('hello world'))
 
-  a.broadcast(b4a.from('twice'))
-  await new Promise((resolve) => b.on('broadcast', (m) => b4a.toString(m) === 'twice' && resolve()))
-  t.alike(heard, ['once', 'twice'])
+  t.alike(await echoed, b4a.from('hello world'))
+  await again
+  t.alike(heard, ['hello world', 'hello world'])
 })
 
 test('broadcast - a sound plays along, the data goes on the control band', async (t) => {

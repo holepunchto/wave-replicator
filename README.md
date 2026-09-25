@@ -176,8 +176,7 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
   holdoff: 1000, // do not talk while someone else was heard this recently
   gap: 0, // listening gap after each message, 2500 when sharing one band
   announceInterval: 60000,
-  batch: 8, // blocks per want, and how far holders push ahead
-  broadcastWindow: 30000 // a repeated broadcast within this window is not emitted again
+  batch: 8 // blocks per want, and how far holders push ahead
 }
 ```
 
@@ -199,7 +198,7 @@ Send one message to everyone in earshot. A buffer, on the control band with the 
 
 #### `wave.on('broadcast', (message) => {})`
 
-A broadcast from someone else, a buffer, or a string in `morse` mode. Repeats and our own echo within `broadcastWindow` are dropped.
+A broadcast from someone else, a buffer, or a string in `morse` mode. Every broadcast is delivered, the same message sent twice arrives twice, and our own echo is dropped.
 
 #### `wave.stats`
 
