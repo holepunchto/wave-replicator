@@ -35,6 +35,28 @@ test('morse - sending and hearing come as start and end events', async (t) => {
   t.alike(events[1], ['receive-start', 'receive-end', 'message'])
 })
 
+test('morse - other modems on air are not heard as morse starting', async (t) => {
+  const bands = require('../lib/ofdm/bands')
+  const morse = new Morse()
+  const quiet = new Float32Array(morse.sampleRate)
+
+  // replication and broadcasts at full volume, clipped a little by the speaker
+  const modems = [quiet]
+  for (const band of ['OFDM_WIDE', 'OFDM_INAUDIBLE']) {
+    const modem = bands.modem(band)
+    for (let i = 0; i < 4; i++) {
+      const packet = modem.encode(new Uint8Array(200).fill(i))
+      modems.push(
+        packet.map((v) => Math.max(-0.5, Math.min(0.5, v * 1.5))),
+        quiet
+      )
+    }
+  }
+
+  t.is(await starts(morse, [...modems, quiet]), 0)
+  t.is(await starts(morse, [...modems, morse.encode('hi'), quiet, quiet]), 1, 'a real one is')
+})
+
 test('morse - the same text from two phones arrives twice', async (t) => {
   const { phones } = await setup(t, 3)
 
@@ -125,4 +147,16 @@ function seeded(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+}
+
+async function starts(morse, chunks) {
+  const demod = new MorseDemodulator(morse)
+  let started = 0
+  demod.on('burst-start', () => started++)
+  demod.resume()
+  const finished = new Promise((resolve) => demod.on('finish', resolve))
+  for (const samples of chunks) demod.write(b4a.from(samples.buffer))
+  demod.end()
+  await finished
+  return started
 }

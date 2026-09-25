@@ -189,12 +189,13 @@ Someone else's copy is on air: from when its header is read until it ends, wheth
 
 #### `morse.on('receive-start' | 'receive-end', () => {})`
 
-A burst of sound at the Morse frequency, from its first tone until a word gap of quiet, then `message` if it read as Morse. Any sound near the frequency starts one, so not every burst ends in a message.
+A burst of Morse, from when it has held a tone for two units until a word gap of quiet, then `message` if it reads as Morse. A tone is its frequency well above the band 400 Hz either side, so replication, broadcasts and most noise, which spill over all of them alike, do not start one.
 
 #### `const wave = new WaveReplicator(air, [options])`
 
 ```js
 {
+  band: 'OFDM_WIDE', // or 'OFDM_INAUDIBLE': silent, at under half the rate, sharing the band with broadcasts
   batch: 8, // blocks per want, and how far holders push ahead
   announceInterval: 60, // seconds until the first announce of our length, doubling while nothing changes
   maxAnnounceInterval: 600

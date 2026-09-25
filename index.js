@@ -12,7 +12,8 @@ module.exports = class WaveReplicator extends ReadyResource {
 
     this.air = air
     this.modem =
-      opts.modem ?? bands.modem('OFDM_WIDE', { sampleRate: air.sampleRate, volume: opts.volume })
+      opts.modem ??
+      bands.modem(opts.band ?? 'OFDM_WIDE', { sampleRate: air.sampleRate, volume: opts.volume })
     this.link = new Link(air, this.modem, opts)
     this.batch = opts.batch ?? 8
     this.announceInterval = opts.announceInterval ?? 60

@@ -163,6 +163,44 @@ test('replicate - announces back off while nothing changes', async (t) => {
   t.ok(sent() - quiet >= 3, 'announced ' + (sent() - quiet) + ' times in the 4.5 s after')
 })
 
+test('replicate - silently, on the band broadcasts use, without mixing them up', async (t) => {
+  const Broadcast = require('../lib/broadcast')
+  const space = new Space({ seed: 7 })
+  const writer = new Hypercore(await t.tmp())
+  await writer.ready()
+  const reader = new Hypercore(await t.tmp(), writer.key)
+  const phones = [writer, reader].map((core, i) => {
+    const air = new Air(space.connect({ x: i * 3 }))
+    const wave = new WaveReplicator(air, { band: 'OFDM_INAUDIBLE', random: mulberry32(i + 1) })
+    const broadcast = new Broadcast(air, { random: mulberry32(i + 21) })
+    const messages = []
+    broadcast.on('message', (m) => messages.push(m))
+    wave.join()
+    wave.on('connection', (conn) => conn.replicate(core))
+    return { air, wave, broadcast, messages }
+  })
+  t.teardown(async () => {
+    for (const p of phones) {
+      await p.wave.close()
+      p.broadcast.destroy()
+      await p.air.close()
+    }
+    await writer.close()
+    await reader.close()
+  })
+  await Promise.all(phones.map((p) => p.air.ready()))
+
+  for (let i = 0; i < 4; i++) await writer.append(b4a.alloc(200, i))
+  await phones[0].broadcast.send(b4a.from('an invite'))
+
+  t.ok(await synced(reader, 4, phones[1].air, 180), 'the reader synced')
+  t.alike(
+    phones[1].messages.map((m) => b4a.toString(m)),
+    ['an invite'],
+    'only the invite is a broadcast'
+  )
+})
+
 // a writer and readers spread over a room, each with its own air, replicating once started
 async function setup(t, opts) {
   const space = new Space({ seed: opts.seed ?? 1, loss: opts.loss, burst: 8 })
