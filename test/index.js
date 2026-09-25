@@ -201,6 +201,24 @@ test('replicate - silently, on the band broadcasts use, without mixing them up',
   )
 })
 
+test('replicate - a want no one heard is asked again soon', async (t) => {
+  const { WANT } = require('../lib/messages')
+  const { writer, readers, waves, clock, start } = await setup(t, { readers: 1, start: false })
+
+  // the writer appends before the reader knows the core, so its push goes unheard, then misses
+  // the reader's first want
+  await writer.append(b4a.alloc(700, 1))
+  let dropped = 0
+  const onmessage = waves[0]._onmessage.bind(waves[0])
+  waves[0]._onmessage = (m) => (m.type === WANT && dropped++ === 0 ? null : onmessage(m))
+  start()
+
+  const from = clock.now
+  t.ok(await synced(readers[0], 1, clock, 60), 'the reader got the block')
+  t.ok(clock.now - from < 20, 'in ' + (clock.now - from).toFixed(0) + ' s of air')
+  t.is(dropped > 0, true)
+})
+
 // a writer and readers spread over a room, each with its own air, replicating once started
 async function setup(t, opts) {
   const space = new Space({ seed: opts.seed ?? 1, loss: opts.loss, burst: 8 })
