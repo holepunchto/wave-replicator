@@ -1,7 +1,7 @@
 import ReadyResource from 'ready-resource'
 import { Duplex } from 'streamx'
 
-type Mode = 'standard' | 'fast' | 'silent' | 'morse'
+type Mode = 'standard' | 'fast' | 'silent' | 'morse' | 'ofdm' | 'ofdm-silent'
 
 type Sound = 'calm' | 'trill' | 'duet' | 'chime' | 'musicbox' | Float32Array
 
@@ -15,6 +15,8 @@ interface WaveReplicatorOptions {
   morseVolume?: number
   broadcastParity?: number
   wpm?: number
+  ofdmBits?: 1 | 2
+  ofdmFrameSize?: number
   sampleRate?: number
   frameSize?: number
   fixed?: boolean

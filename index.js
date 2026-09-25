@@ -22,7 +22,10 @@ const ECHO_GRACE = 3000
 const MODES = {
   standard: { protocol: 'AUDIBLE_FASTEST', controlProtocol: 'ULTRASOUND_FASTEST' },
   fast: { protocol: 'WIDE', controlProtocol: 'INAUDIBLE' },
-  silent: { protocol: 'INAUDIBLE', controlProtocol: null }
+  silent: { protocol: 'INAUDIBLE', controlProtocol: null },
+  // OFDM: many carriers at once rather than ggwave's few tones, several times the data rate
+  ofdm: { protocol: 'OFDM_WIDE', controlProtocol: 'INAUDIBLE' },
+  'ofdm-silent': { protocol: 'OFDM_INAUDIBLE', controlProtocol: null }
 }
 
 // morse taps broadcasts out for people to read and replicates on the inaudible band underneath

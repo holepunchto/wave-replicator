@@ -67,14 +67,16 @@ MODE=silent SOUND=keet BROADCAST='hello' bare examples/demo.js 4 256   # broadca
 
 ## Modes
 
-| mode       | replication bands                                          | broadcasts                     | 1 KB end to end |
-| ---------- | ---------------------------------------------------------- | ------------------------------ | --------------- |
-| `fast`     | data 2.1 - 10.7 kHz (custom), control 18.8 - 21.7 kHz      | control band, inaudible        | 44 s, 23 B/s    |
-| `standard` | data 2.1 - 6.2 kHz, control 15.2 - 19.3 kHz (stock ggwave) | control band, ultrasound       | 85 s, 12 B/s    |
-| `silent`   | one band, 18.8 - 21.7 kHz, inaudible to most people        | the same band                  | 116 s, 8.8 B/s  |
-| `morse`    | one band, 18.8 - 21.7 kHz, underneath the Morse            | Morse code, readable by people | as `silent`     |
+| mode          | replication bands                                          | broadcasts                     | 1 KB end to end  |
+| ------------- | ---------------------------------------------------------- | ------------------------------ | ---------------- |
+| `fast`        | data 2.1 - 10.7 kHz (custom), control 18.8 - 21.7 kHz      | control band, inaudible        | 44 s, 23 B/s     |
+| `standard`    | data 2.1 - 6.2 kHz, control 15.2 - 19.3 kHz (stock ggwave) | control band, ultrasound       | 85 s, 12 B/s     |
+| `silent`      | one band, 18.8 - 21.7 kHz, inaudible to most people        | the same band                  | 116 s, 8.8 B/s   |
+| `morse`       | one band, 18.8 - 21.7 kHz, underneath the Morse            | Morse code, readable by people | as `silent`      |
+| `ofdm`        | data 2.1 - 10.7 kHz as OFDM, control 18.8 - 21.7 kHz       | control band, inaudible        | not measured     |
+| `ofdm-silent` | one band, 18.8 - 21.7 kHz, as OFDM                         | the same band                  | 34.6 s, 29.6 B/s |
 
-Measured on a MacBook, speaker to its own mic, writer and reader as separate processes, 1 KB as 4 blocks of 256 B, with no resends. `fast`, `silent` and `morse` share the inaudible band, so they hear each other's broadcasts.
+Measured on a MacBook, speaker to its own mic, writer and reader as separate processes, 1 KB as 4 blocks of 256 B, with no resends. `fast`, `silent` and `morse` share the inaudible band, so they hear each other's broadcasts. The `ofdm` modes use the same bands with a different modulation, so they only talk to each other.
 
 ## Sounds
 
@@ -104,6 +106,8 @@ In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 wor
 **Adaptive parity.** A repair raises the sender's parity to what would have covered that listener, and it decays by 1% per message, down to 0.15.
 
 **Push ahead.** A writer broadcasts the upgrade and new blocks as soon as it appends, and answering a want also sends the batch after it. Listeners only ask again once the data band has been quiet for a while.
+
+**OFDM.** The `ofdm` modes send each frame as one OFDM packet: dozens to hundreds of carriers at once instead of ggwave's few tones. A packet is a Schmidl-Cox preamble, which a receiver finds by the repeat between its two halves, then a known reference symbol, a header and the payload. Each carrier is DBPSK (DQPSK with `ofdmBits: 2`) against the same carrier in the symbol before, so the room's effect on every carrier cancels without a channel estimate. The payload is the 802.11 convolutional code with soft Viterbi decoding, spread over every carrier and symbol so a notch in the room's response turns into errors thin enough to correct. Frames are 128 bytes on the wide band and 64 on the inaudible one. Over a MacBook's speaker to its mic, raw packets carry 320 B/s (DBPSK) to 530 B/s (DQPSK) on the wide band against ggwave's 62.5, and 126 to 228 B/s on the inaudible band against 22.7. `bare bench/ofdm.js` compares them over simulated rooms.
 
 **Morse.** The 700 Hz level is measured in 5 ms blocks, and each burst of sound between silences is read whole. The tone threshold is picked from the burst itself, so it adapts to how loud the sender is. Over the air dots come out weaker than dashes, and echo stretches every tone and shortens every gap by the same amount, so dots and dashes are told apart by comparing tone lengths with each other, and gaps are corrected by the measured stretch. A message that ends with AR is delivered even if its opening KA was garbled.
 
@@ -165,6 +169,8 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
   morseVolume: 0.8, // Morse level, loud enough to carry, clips only where it overlaps data
   broadcastParity: 0.5, // parity for broadcasts on the control band
   wpm: 20, // Morse speed in words per minute
+  ofdmBits: 1, // bits per OFDM carrier: 1 DBPSK, 2 DQPSK, twice as fast but less tolerant of echo
+  ofdmFrameSize: 128, // bytes per OFDM frame, 128 on the wide band and 64 on the inaudible one by default
   sampleRate: 48000,
   frameSize: 16, // bytes per ggwave frame, up to 64
   fixed: true, // ggwave fixed-length frames, no start and end markers

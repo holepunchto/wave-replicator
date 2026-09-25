@@ -173,6 +173,26 @@ test('replicate - single channel when control protocol is disabled', async (t) =
   for (const r of readers) t.alike(await r.get(3), b4a.from('block 3'))
 })
 
+test('replicate - ofdm mode carries data on many carriers', async (t) => {
+  const { writer, readers, waves } = await setup(t, { readers: 1, mode: 'ofdm' })
+
+  for (let i = 0; i < 4; i++) await writer.append(b4a.alloc(256, i))
+
+  await synced(readers[0], 4)
+  t.alike(await readers[0].get(3), b4a.alloc(256, 3))
+  t.alike(waves[0].stats.data.framesSent > 0, true, 'sent as OFDM frames')
+  t.is(waves[0].data.protocol, 'OFDM_WIDE')
+})
+
+test('replicate - ofdm-silent on one inaudible band, through frame loss', async (t) => {
+  const { writer, readers } = await setup(t, { readers: 2, mode: 'ofdm-silent', loss: 0.003 })
+
+  for (let i = 0; i < 4; i++) await writer.append(b4a.alloc(200, i))
+
+  await Promise.all(readers.map((r) => synced(r, 4)))
+  for (const r of readers) t.alike(await r.get(3), b4a.alloc(200, 3))
+})
+
 test('replicate - encrypted core stays private to key holders', async (t) => {
   const encryption = { key: b4a.alloc(32, 7) }
   const { writer, readers, eavesdropper } = await setup(t, {
@@ -309,6 +329,22 @@ test('broadcast - the same message from someone else still arrives', async (t) =
   t.alike(await echoed, b4a.from('hello world'))
   await again
   t.alike(heard, ['hello world', 'hello world'])
+})
+
+test('broadcast - carried as OFDM in ofdm-silent', async (t) => {
+  const air = new Air()
+  const [a, b] = [0, 1].map(
+    () => new WaveReplicator(air.connect(), { ...FAST, mode: 'ofdm-silent' })
+  )
+  t.teardown(() => Promise.all([a.close(), b.close()]))
+
+  a.join()
+  b.join()
+  await Promise.all([a.ready(), b.ready()])
+
+  const heard = new Promise((resolve) => b.once('broadcast', resolve))
+  a.broadcast(b4a.from('pear://keet/invite'))
+  t.alike(await heard, b4a.from('pear://keet/invite'))
 })
 
 test('broadcast - a sound plays along, the data goes on the control band', async (t) => {
