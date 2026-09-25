@@ -193,7 +193,10 @@ test('ofdm - a header tells how long its packet stays on air', (t) => {
   t.ok(Math.abs(heard[0] - (4800 + packet.length - cut) / 48000) < 0.1, 'and says how long is left')
 
   const rest = receiver.push(samples.subarray(cut))
-  t.alike(rest.map((p) => b4a.from(p)), [payload])
+  t.alike(
+    rest.map((p) => b4a.from(p)),
+    [payload]
+  )
 })
 
 test('replicate - ofdm mode carries data on many carriers', async (t) => {
