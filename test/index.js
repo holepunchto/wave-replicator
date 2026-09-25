@@ -11,6 +11,8 @@ const Air = require('./helpers/air')
 const room = require('./helpers/room')
 const Morse = require('../lib/morse')
 const MorseDemodulator = require('../lib/morse-demodulator')
+const bands = require('../lib/ofdm/bands')
+const Receiver = require('../lib/ofdm/receiver')
 
 const FAST = { backoff: 5, retry: 300, announceInterval: 200, stall: 50, holdoff: 20, gap: 20 }
 
@@ -171,6 +173,27 @@ test('replicate - single channel when control protocol is disabled', async (t) =
 
   await Promise.all(readers.map((r) => synced(r, 4)))
   for (const r of readers) t.alike(await r.get(3), b4a.from('block 3'))
+})
+
+test('ofdm - a header tells how long its packet stays on air', (t) => {
+  const modem = bands.modem('OFDM_INAUDIBLE')
+  const payload = b4a.alloc(64, 7)
+  const packet = modem.encode(payload)
+  const samples = new Float32Array(packet.length + 48000)
+  samples.set(packet, 4800)
+
+  const heard = []
+  const receiver = new Receiver(modem, { onheader: (seconds) => heard.push(seconds) })
+
+  // up to just after the header, then the rest
+  const cut = 4800 + 4 * modem.symbolLength
+  const early = receiver.push(samples.subarray(0, cut))
+  t.is(early.length, 0, 'no payload yet')
+  t.is(heard.length, 1, 'the header is read before the packet ends')
+  t.ok(Math.abs(heard[0] - (4800 + packet.length - cut) / 48000) < 0.1, 'and says how long is left')
+
+  const rest = receiver.push(samples.subarray(cut))
+  t.alike(rest.map((p) => b4a.from(p)), [payload])
 })
 
 test('replicate - ofdm mode carries data on many carriers', async (t) => {

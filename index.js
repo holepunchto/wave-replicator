@@ -266,7 +266,11 @@ module.exports = class WaveReplicator extends ReadyResource {
 
   _receive() {
     return new Writable({
-      write: ({ channel, frame }, cb) => {
+      write: ({ channel, frame, busy }, cb) => {
+        if (busy !== undefined) {
+          this.channels[channel].hear(busy)
+          return cb(null)
+        }
         const buf = this.channels[channel].receive(frame)
         if (buf !== null) this._onmessage(buf)
         cb(null)
