@@ -84,12 +84,12 @@ A broadcast is sent as a few copies, every copy carrying the same random id, so 
 
 In a simulated room of 10 phones at random places in 6 by 6 m (`bare bench/room.js`, 5 seeded trials each):
 
-| senders at once          | everyone has every invite | copies each |
-| ------------------------ | ------------------------- | ----------- |
-| 1                        | 5/5, in 5 to 9 s          | 1 to 3      |
-| 1, with 1 s mic dropouts | 5/5, in 5 to 13 s         | 1 to 3      |
-| 3                        | 5/5, in 6 to 10 s         | 3 to 5      |
-| 10                       | 5/5, in 16 to 18 s        | 5           |
+| senders at once          | everyone has every invite | copies sent until then, in all |
+| ------------------------ | ------------------------- | ------------------------------ |
+| 1                        | 5/5, in 5 to 9 s          | 1                              |
+| 1, with 1 s mic dropouts | 5/5, in 5 to 13 s         | 1 to 2                         |
+| 3                        | 5/5, in 6 to 10 s         | 3 to 5                         |
+| 10                       | 5/5, in 16 to 36 s        | 15 to 35                       |
 
 A copy of a 40 byte invite is 0.43 s of OFDM on the inaudible band. `GgwaveModem` (`wave-replicator/ggwave`) is a slower alternative, a single ggwave frame of up to 140 bytes, 5.3 s for 100 bytes, that holds up to more motion.
 
