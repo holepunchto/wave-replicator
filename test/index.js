@@ -3,7 +3,7 @@ const b4a = require('b4a')
 const { pipeline } = require('streamx')
 const Hypercore = require('hypercore')
 const Corestore = require('corestore')
-const Hyperwave = require('..')
+const WaveReplicator = require('..')
 const Modulator = require('../lib/modulator')
 const Demodulator = require('../lib/demodulator')
 const Fragmenter = require('../lib/fragmenter')
@@ -101,11 +101,11 @@ test('modulator and demodulator - frame crosses the air', async (t) => {
   })
 
   const received = new Promise((resolve) => demodulator.once('data', resolve))
-  modulator.write(b4a.from('hello hyperwave!'))
+  modulator.write(b4a.from('hello world 2026'))
 
   const { channel, frame } = await received
   t.is(channel, 0)
-  t.alike(frame, b4a.from('hello hyperwave!'))
+  t.alike(frame, b4a.from('hello world 2026'))
 })
 
 test('replicate - reader gets every block', async (t) => {
@@ -194,7 +194,7 @@ test('replicate - encrypted core stays private to key holders', async (t) => {
 
 test('connection - emitted once the audio is set up', async (t) => {
   const air = new Air()
-  const wave = new Hyperwave(air.connect(), FAST)
+  const wave = new WaveReplicator(air.connect(), FAST)
   t.teardown(() => wave.close())
 
   wave.join()
@@ -211,7 +211,7 @@ test('connection - replicates every core a store opens', async (t) => {
   const air = new Air()
   const a = new Corestore(await t.tmp())
   const b = new Corestore(await t.tmp())
-  const waves = [new Hyperwave(air.connect(), FAST), new Hyperwave(air.connect(), FAST)]
+  const waves = [new WaveReplicator(air.connect(), FAST), new WaveReplicator(air.connect(), FAST)]
 
   t.teardown(async () => {
     for (const w of waves) await w.close()
@@ -240,7 +240,7 @@ test('connection - replicates every core a store opens', async (t) => {
 
 test('replicate - announces back off while nothing changes', async (t) => {
   const air = new Air()
-  const wave = new Hyperwave(air.connect(), { ...FAST, announceInterval: 100 })
+  const wave = new WaveReplicator(air.connect(), { ...FAST, announceInterval: 100 })
   const core = new Hypercore(await t.tmp())
   t.teardown(async () => {
     await wave.close()
@@ -269,7 +269,7 @@ test('replicate - announces back off while nothing changes', async (t) => {
 
 test('broadcast - reaches everyone in earshot, not the sender', async (t) => {
   const air = new Air()
-  const waves = [0, 1, 2].map(() => new Hyperwave(air.connect(), FAST))
+  const waves = [0, 1, 2].map(() => new WaveReplicator(air.connect(), FAST))
   t.teardown(() => Promise.all(waves.map((w) => w.close())))
 
   for (const w of waves) w.join()
@@ -289,7 +289,7 @@ test('broadcast - reaches everyone in earshot, not the sender', async (t) => {
 
 test('broadcast - the same message from someone else still arrives', async (t) => {
   const air = new Air()
-  const [a, b, c] = [0, 1, 2].map(() => new Hyperwave(air.connect(), FAST))
+  const [a, b, c] = [0, 1, 2].map(() => new WaveReplicator(air.connect(), FAST))
   t.teardown(() => Promise.all([a.close(), b.close(), c.close()]))
 
   for (const w of [a, b, c]) w.join()
@@ -314,7 +314,7 @@ test('broadcast - the same message from someone else still arrives', async (t) =
 test('broadcast - a sound plays along, the data goes on the control band', async (t) => {
   const air = new Air()
   const [a, b] = [0, 1].map(
-    () => new Hyperwave(air.connect(), { ...FAST, mode: 'silent', sound: 'duet' })
+    () => new WaveReplicator(air.connect(), { ...FAST, mode: 'silent', sound: 'duet' })
   )
   t.teardown(() => Promise.all([a.close(), b.close()]))
 
@@ -334,7 +334,9 @@ test('broadcast - a sound plays along, the data goes on the control band', async
 
 test('broadcast - tapped out in morse', async (t) => {
   const air = new Air()
-  const [a, b] = [0, 1].map(() => new Hyperwave(air.connect(), { ...FAST, mode: 'morse', wpm: 40 }))
+  const [a, b] = [0, 1].map(
+    () => new WaveReplicator(air.connect(), { ...FAST, mode: 'morse', wpm: 40 })
+  )
   t.teardown(() => Promise.all([a.close(), b.close()]))
 
   a.join()
@@ -347,15 +349,15 @@ test('broadcast - tapped out in morse', async (t) => {
   })
 
   const heard = new Promise((resolve) => b.once('broadcast', resolve))
-  a.broadcast('Hello from hyperwave!')
+  a.broadcast('Hello world!')
 
-  t.is(await heard, 'HELLO FROM HYPERWAVE!')
+  t.is(await heard, 'HELLO WORLD!')
   t.absent(echo)
 })
 
 test('morse - read through echo, a swelling speaker and noise', async (t) => {
   const morse = new Morse({ wpm: 40 })
-  const samples = room(morse.encode('hello from hyperwave'), { noise: 0.02 })
+  const samples = room(morse.encode('hello world'), { noise: 0.02 })
 
   const demod = new MorseDemodulator(morse)
   const heard = []
@@ -368,7 +370,7 @@ test('morse - read through echo, a swelling speaker and noise', async (t) => {
   demod.end()
   await ended
 
-  t.alike(heard, ['HELLO FROM HYPERWAVE'])
+  t.alike(heard, ['HELLO WORLD'])
 })
 
 test('morse - noise and stray beeps are not messages', async (t) => {
@@ -413,7 +415,7 @@ async function setup(t, opts) {
   const waves = []
 
   const wave = () => {
-    const w = new Hyperwave(air.connect(), {
+    const w = new WaveReplicator(air.connect(), {
       ...FAST,
       mode: opts.mode,
       sound: opts.sound,

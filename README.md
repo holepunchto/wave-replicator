@@ -2,7 +2,7 @@
   <img src="logo.svg" alt="" width="200">
 </p>
 
-<h1 align="center">hyperwave</h1>
+<h1 align="center">wave-replicator</h1>
 
 <p align="center">
   <b>Hypercore over sound</b>
@@ -38,15 +38,15 @@ Broadcasts carry small messages such as room invites, on the inaudible band with
 ## Installation
 
 ```
-npm i hyperwave
+npm i wave-replicator
 ```
 
 ## Usage
 
 ```js
-const Hyperwave = require('hyperwave')
+const WaveReplicator = require('wave-replicator')
 
-const wave = new Hyperwave(audio, { mode: 'fast' }) // audio: streamx Duplex of f32le mono PCM
+const wave = new WaveReplicator(audio, { mode: 'fast' }) // audio: streamx Duplex of f32le mono PCM
 
 wave.join()
 wave.on('connection', (conn) => conn.replicate(store))
@@ -91,7 +91,7 @@ A broadcast is data on the inaudible band, but people can hear something pleasan
 
 Or pass your own mono f32 samples. `bare bench/song.js [seconds]` renders each sound to `.demo/song-<sound>.wav` to listen to, and `bare bench/broadcast.js [sound] [message]` renders a whole broadcast as the room hears it, the sound plus the inaudible data, and decodes it back.
 
-In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 words per minute by default, framed by the KA and AR prosigns, so anyone who knows Morse can read it by ear. It takes and delivers strings, upper case and with only what Morse can carry (letters, digits and common punctuation, but not `+`, which is the AR prosign). "Hello from hyperwave" takes 15 s at 20 wpm. `bare bench/morse.js "some text"` renders `.demo/morse-<wpm>wpm.wav`.
+In `morse` mode broadcasts are plain Morse code instead, a 700 Hz tone at 20 words per minute by default, framed by the KA and AR prosigns, so anyone who knows Morse can read it by ear. It takes and delivers strings, upper case and with only what Morse can carry (letters, digits and common punctuation, but not `+`, which is the AR prosign). "hello world" takes 10 s at 20 wpm. `bare bench/morse.js "some text"` renders `.demo/morse-<wpm>wpm.wav`.
 
 ## How it works
 
@@ -136,8 +136,8 @@ Compared to BLE:
 
 |                                                 | rate           |
 | ----------------------------------------------- | -------------- |
-| hyperwave `fast`, block data end to end         | ~23 B/s        |
-| hyperwave `silent`                              | ~9 B/s         |
+| wave-replicator `fast`, block data end to end   | ~23 B/s        |
+| wave-replicator `silent`                        | ~9 B/s         |
 | BLE 4.2 - 5 in practice (typical, not measured) | ~10 - 100 KB/s |
 
 Sound is roughly 500 to 10,000 times slower than BLE: 1 KB takes under a minute in `fast` mode and 10 - 100 ms over BLE. What sound buys is reach without pairing or radios, any device with a mic and a speaker in the room, and one transmission reaches every listener.
@@ -152,7 +152,7 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
 
 ## API
 
-#### `const wave = new Hyperwave(audio, [options])`
+#### `const wave = new WaveReplicator(audio, [options])`
 
 ```js
 {

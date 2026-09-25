@@ -1,7 +1,7 @@
 // simulated air sweep: bare bench/air.js
 const Hypercore = require('hypercore')
 const b4a = require('b4a')
-const Hyperwave = require('..')
+const WaveReplicator = require('..')
 const Air = require('../test/helpers/air')
 
 const FAST = { backoff: 5, retry: 3000, announceInterval: 5000, stall: 300 }
@@ -38,7 +38,7 @@ async function run({ blocks, blockSize, loss, parity, adaptive }) {
   const reader = new Hypercore(dir + '/r', writer.key)
 
   const waves = [writer, reader].map((core) => {
-    const wave = new Hyperwave(air.connect(), { ...FAST, parity, adaptive })
+    const wave = new WaveReplicator(air.connect(), { ...FAST, parity, adaptive })
     wave.join()
     wave.on('connection', (conn) => conn.replicate(core))
     return wave

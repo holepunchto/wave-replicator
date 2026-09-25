@@ -4,7 +4,7 @@ const b4a = require('b4a')
 
 const CHUNK = 9600
 
-// macOS mic + speaker as the PCM duplex hyperwave expects (f32le, mono)
+// macOS mic + speaker as the PCM duplex wave-replicator expects (f32le, mono)
 module.exports = class Audio extends Duplex {
   constructor(opts = {}) {
     super()

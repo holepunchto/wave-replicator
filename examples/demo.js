@@ -1,14 +1,14 @@
 // bare examples/demo.js [blocks] [size]   -> writer, prints the key
 // bare examples/demo.js <key>             -> reader
 //
-// MODE=fast|standard|silent|morse         the Hyperwave mode, standard by default
+// MODE=fast|standard|silent|morse         the wave-replicator mode, standard by default
 // SOUND=calm|trill|duet|chime|musicbox     plays along with broadcasts
 // PROTOCOL=... CONTROL=...|none            override the bands
 // BROADCAST=text BROADCAST_DELAY=ms        broadcast once connected
 const process = require('bare-process')
 const Hypercore = require('hypercore')
 const b4a = require('b4a')
-const Hyperwave = require('..')
+const WaveReplicator = require('..')
 const Audio = require('./audio')
 
 const arg = process.argv[2] || '4'
@@ -27,7 +27,7 @@ async function main() {
     const blocks = []
     const size = Number(process.argv[3] || 0)
     for (let i = 0; i < Number(arg); i++) {
-      const text = b4a.from('hyperwave block #' + i)
+      const text = b4a.from('hello world #' + i)
       blocks.push(
         size > text.byteLength ? b4a.concat([text, b4a.alloc(size - text.byteLength, 46)]) : text
       )
@@ -37,7 +37,7 @@ async function main() {
   }
 
   const audio = new Audio()
-  const wave = new Hyperwave(audio, {
+  const wave = new WaveReplicator(audio, {
     mode,
     sound: process.env.SOUND,
     protocol: process.env.PROTOCOL,

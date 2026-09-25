@@ -5,7 +5,7 @@ const b4a = require('b4a')
 const Morse = require('../lib/morse')
 const MorseDemodulator = require('../lib/morse-demodulator')
 
-const text = process.argv[2] || 'Hello from hyperwave'
+const text = process.argv[2] || 'hello world'
 
 for (const wpm of [15, 20, 25]) {
   const morse = new Morse({ wpm })

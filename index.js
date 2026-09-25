@@ -28,7 +28,7 @@ const MODES = {
 // morse taps broadcasts out for people to read and replicates on the inaudible band underneath
 MODES.morse = { protocol: 'INAUDIBLE', controlProtocol: null, morse: true }
 
-module.exports = class Hyperwave extends ReadyResource {
+module.exports = class WaveReplicator extends ReadyResource {
   constructor(audio, opts = {}) {
     super()
 

@@ -5,7 +5,7 @@ type Mode = 'standard' | 'fast' | 'silent' | 'morse'
 
 type Sound = 'calm' | 'trill' | 'duet' | 'chime' | 'musicbox' | Float32Array
 
-interface HyperwaveOptions {
+interface WaveReplicatorOptions {
   mode?: Mode
   protocol?: string
   controlProtocol?: string | null
@@ -49,8 +49,8 @@ declare class Connection {
   replicate(target: unknown): this
 }
 
-declare class Hyperwave extends ReadyResource {
-  constructor(audio: Duplex, opts?: HyperwaveOptions)
+declare class WaveReplicator extends ReadyResource {
+  constructor(audio: Duplex, opts?: WaveReplicatorOptions)
 
   readonly mode: Mode
   readonly stats: ChannelStats | { control: ChannelStats; data: ChannelStats }
@@ -63,4 +63,4 @@ declare class Hyperwave extends ReadyResource {
   on(event: 'error', listener: (err: Error) => void): this
 }
 
-export = Hyperwave
+export = WaveReplicator
