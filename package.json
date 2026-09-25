@@ -47,7 +47,7 @@
   },
   "scripts": {
     "format": "prettier . --write",
-    "test": "brittle-bare test/index.js",
+    "test": "brittle-bare test/index.js test/broadcast.js",
     "lint": "prettier . --check && lunte"
   },
   "repository": {
