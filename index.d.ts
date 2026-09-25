@@ -26,6 +26,7 @@ interface HyperwaveOptions {
   holdoff?: number
   gap?: number
   announceInterval?: number
+  maxAnnounceInterval?: number
   batch?: number
 }
 

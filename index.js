@@ -76,6 +76,7 @@ module.exports = class Hyperwave extends ReadyResource {
 
     this.retry = opts.retry ?? 10000
     this.announceInterval = opts.announceInterval ?? 60000
+    this.maxAnnounceInterval = Math.max(this.announceInterval, opts.maxAnnounceInterval ?? 600000)
     this.batch = opts.batch ?? 8
     this.stall = opts.stall ?? 1500
 

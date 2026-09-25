@@ -238,6 +238,35 @@ test('connection - replicates every core a store opens', async (t) => {
   t.alike(await readSecond.get(0), b4a.from('opened after the connection'))
 })
 
+test('replicate - announces back off while nothing changes', async (t) => {
+  const air = new Air()
+  const wave = new Hyperwave(air.connect(), { ...FAST, announceInterval: 100 })
+  const core = new Hypercore(await t.tmp())
+  t.teardown(async () => {
+    await wave.close()
+    await core.close()
+  })
+
+  await core.append(b4a.from('block'))
+  wave.join()
+  wave.on('connection', (conn) => conn.replicate(core))
+  await wave.ready()
+
+  // every 100 ms would be 16 announces, doubling from 100 ms is about 5
+  const sent = () => wave.stats.control.messagesSent
+  await new Promise((resolve) => setTimeout(resolve, 1600))
+  const quiet = sent()
+  t.ok(quiet >= 3 && quiet <= 6, 'announced ' + quiet + ' times in 1.6 s')
+
+  // news brings the short interval back
+  await core.append(b4a.from('another block'))
+  await new Promise((resolve) => setTimeout(resolve, 450))
+  t.ok(
+    sent() - quiet >= 3,
+    'announced ' + (sent() - quiet) + ' times in the 450 ms after an append'
+  )
+})
+
 test('broadcast - reaches everyone in earshot, not the sender', async (t) => {
   const air = new Air()
   const waves = [0, 1, 2].map(() => new Hyperwave(air.connect(), FAST))

@@ -175,7 +175,8 @@ On a MacBook the speaker to mic path stays within about ±10 dB of the 1 kHz lev
   stall: 1500, // ask for repair frames after a partly received message is quiet this long
   holdoff: 1000, // do not talk while someone else was heard this recently
   gap: 0, // listening gap after each message, 2500 when sharing one band
-  announceInterval: 60000,
+  announceInterval: 60000, // first announce of our length, doubling while nothing changes
+  maxAnnounceInterval: 600000, // up to this, back to announceInterval on news or a peer catching up
   batch: 8 // blocks per want, and how far holders push ahead
 }
 ```
